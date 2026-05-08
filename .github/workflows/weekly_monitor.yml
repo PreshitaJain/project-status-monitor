@@ -1,0 +1,28 @@
+name: Weekly Project Status Monitor
+
+on:
+  schedule:
+    - cron: '0 17 * * 1'  # Runs every Monday at 9:00 AM PST (UTC-8)
+  workflow_dispatch:       # Allows manual trigger from GitHub UI
+
+jobs:
+  run-monitor:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run project status monitor
+        env:
+          AZURE_DEVOPS_PAT: ${{ secrets.AZURE_DEVOPS_PAT }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: python3 project_monitor.py
