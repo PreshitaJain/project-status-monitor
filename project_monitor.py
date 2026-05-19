@@ -27,6 +27,9 @@ def get_work_items():
         auth=("", PAT)
     )
 
+    if response.status_code != 200:
+        raise RuntimeError(f"Azure DevOps API error {response.status_code}: {response.text}")
+
     work_items = response.json().get("workItems", [])
     return [item["id"] for item in work_items]
 
@@ -34,6 +37,10 @@ def get_work_item_details(item_id):
     url = f"https://dev.azure.com/{ORGANIZATION}/{PROJECT}/_apis/wit/workitems/{item_id}?api-version=7.0"
 
     response = requests.get(url, auth=("", PAT))
+
+    if response.status_code != 200:
+        raise RuntimeError(f"Azure DevOps API error {response.status_code} for item {item_id}: {response.text}")
+
     return response.json()
 
 def check_status(item):
@@ -69,6 +76,11 @@ def send_slack_notification(alerts):
         print(f"Failed to send Slack notification: {response.status_code}")
 
 def main():
+    if not PAT:
+        raise RuntimeError("AZURE_DEVOPS_PAT secret is not set in GitHub repository secrets.")
+    if not SLACK_WEBHOOK_URL:
+        raise RuntimeError("SLACK_WEBHOOK_URL secret is not set in GitHub repository secrets.")
+
     print("Checking project statuses...\n")
 
     item_ids = get_work_items()
